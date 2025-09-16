@@ -62,8 +62,8 @@ imagesc(testimage'); % this command plots an array as an image.  Type 'help imag
 
 %% This next section of code calls the three functions you are asked to specify
 
-k= 20; % set k
-max_iter= 10; % set the number of iterations of the algorithm
+k= 30; % set k
+max_iter= 30; % set the number of iterations of the algorithm
 
 %% The next line initializes the centroids.  Look at the initialize_centroids()
 % function, which is specified further down this file.
@@ -77,8 +77,14 @@ cost_iteration = zeros(max_iter, 1);
 %% This for-loop enacts the k-means algorithm
 
 for iter=1:max_iter
-    
-      % FILL THIS IN!
+    total_cost=0;
+    for i=1:size(train,1)
+        [centroidIndex, distance] = assign_vector_to_centroid(train(i,1:784), centroids); % assign vector to centroid, return distance and index
+        train(i, 785) = centroidIndex; % Assign the index of the closest centroid to the last column
+        total_cost = total_cost + distance^2; % Accumulate the total cost= distance square
+    end
+    centroids = update_Centroids(train, k);
+    cost_iteration(iter) = total_cost; % Store the cost for the current iteration in cost array
     
 end
 
@@ -86,6 +92,10 @@ end
 % of iterations
 
 figure;
+plot(1:max_iter,cost_iteration); % x axis from 1-max iteration, column vector with size max iteration in y
+xlabel("iteration");
+ylabel("cost");
+title("k-means cost vs iteration");
 % FILL THIS IN!
 
 
@@ -131,7 +141,16 @@ end
 
 function [index, vec_distance] = assign_vector_to_centroid(data,centroids)
 
-% FILL THIS IN
+minimumDistance=1/0; %initialize to infinity
+index=1; %initialize index
+for k=1:size(centroids,1)
+    distance=norm(data-centroids(k,:)); %calculate distance between the data point and every centroid point
+    if distance<minimumDistance
+        minimumDistance=distance;% This if finds the smallest distance and return its index
+        index=k;
+    end
+end
+vec_distance=minimumDistance;
 
 end
 
@@ -142,7 +161,14 @@ end
 % training images.
 
 function new_centroids=update_Centroids(data,K)
-
+new_centroids=zeros(K,784); %initiallize
 % FILL THIS IN
+for j=1:K
+    assignedData = data(data(:, 785) == j, 1:784); % use each data in that cluster j as data source
+    
+    new_centroids(j, 1:784) = mean(assignedData,1);  
+    % Update centroid to the mean of every colomn in assigned data
+    
+end
 
 end
