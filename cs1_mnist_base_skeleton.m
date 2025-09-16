@@ -20,7 +20,7 @@ close all;
 %% Initialize Data Set
 % These next lines of code read in two sets of MNIST digits that will be used for training and testing respectively.
 
-% training set (1500 images) 这玩意有问题
+% training set (1500 images) 
 train=csvread('mnist_train.csv');
 trainsetlabels = train(:,1);
 train=train(:,2:785);
