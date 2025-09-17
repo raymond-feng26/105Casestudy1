@@ -21,21 +21,21 @@ close all;
 % These next lines of code read in two sets of MNIST digits that will be used for training and testing respectively.
 
 % training set (1500 images) 
-train=csvread('mnist_train.csv');
-trainsetlabels = train(:,1);
-train=train(:,2:785);
-train(:,1)=zeros(60000,1);
+train=csvread('mnist_train_1500.csv');
+trainsetlabels = train(:,785);
+train=train(:,1:784);
+train(:,785)=zeros(1500,1);
 
 % testing set (200 images with 11 outliers)
-test=csvread('mnist_test.csv');
+test=csvread('mnist_test_200_woutliers.csv');
 % store the correct test labels
-correctlabels = test(:,1);
-test=test(:,2:785);
+correctlabels = test(:,785);
+test=test(:,1:784);
 
 % now, zero out the labels in "test" so that you can use this to assign
 % your own predictions and evaluate against "correctlabels"
 % in the 'cs1_mnist_evaluate_test_set.m' script
-test(:,1)=zeros(10000,1);
+test(:,785)=zeros(200,1);
 
 %% After initializing, you will have the following variables in your workspace:
 % 1. train (a 1500 x 785 array, containins the 1500 training images)
@@ -62,30 +62,40 @@ imagesc(testimage'); % this command plots an array as an image.  Type 'help imag
 
 %% This next section of code calls the three functions you are asked to specify
 
-k= 30; % set k
-max_iter= 30; % set the number of iterations of the algorithm
+
 
 %% The next line initializes the centroids.  Look at the initialize_centroids()
 % function, which is specified further down this file.
 
-centroids=initialize_centroids(train,k);
+
 
 %% Initialize an array that will store k-means cost at each iteration
 
-cost_iteration = zeros(max_iter, 1);
+
 
 %% This for-loop enacts the k-means algorithm
+use_stratified = false;
 
-for iter=1:max_iter
-    total_cost=0;
-    for i=1:size(train,1)
-        [centroidIndex, distance] = assign_vector_to_centroid(train(i,1:784), centroids); % assign vector to centroid, return distance and index
-        train(i, 785) = centroidIndex; % Assign the index of the closest centroid to the last column
-        total_cost = total_cost + distance^2; % Accumulate the total cost= distance square
-    end
-    centroids = update_Centroids(train, k);
-    cost_iteration(iter) = total_cost; % Store the cost for the current iteration in cost array
+if use_stratified
+    k_per_digit=[1;1;1;1;1;1;1;1;1;1]
     
+
+else
+    k= 32; % set k
+    max_iter= 20; % set the number of iterations of the algorithm
+    centroids=initialize_centroids(train(:,1:784),k);
+    cost_iteration = zeros(max_iter, 1);
+    for iter=1:max_iter
+        total_cost=0;
+        for i=1:size(train,1)
+            [centroidIndex, distance] = assign_vector_to_centroid(train(i,1:784), centroids); % assign vector to centroid, return distance and index
+            train(i, 785) = centroidIndex; % Assign the index of the closest centroid to the last column
+            total_cost = total_cost + distance^2; % Accumulate the total cost= distance square
+        end
+        centroids = update_Centroids(train, k);
+        cost_iteration(iter) = total_cost; % Store the cost for the current iteration in cost array
+        
+    end
 end
 
 %% This section of code plots the k-means cost as a function of the number
