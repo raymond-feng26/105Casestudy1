@@ -109,7 +109,7 @@ if use_stratified
     end
 
 else
-    k= 25; % set k
+    k= 30; % set k
     max_iter= 20; % set the number of iterations of the algorithm
     all_centroid=initialize_centroids(train(:,1:784),k);
     cost_iteration = zeros(max_iter, 1);
