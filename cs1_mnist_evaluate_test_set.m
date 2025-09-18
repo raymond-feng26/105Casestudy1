@@ -14,6 +14,8 @@
 
 predictions = zeros(200,1);
 outliers = zeros(200,1);
+centroids=all_centroid;
+centroid_labels=all_labels;
 
 % loop through the test set, figure out the predicted number
 for i = 1:200
@@ -21,7 +23,7 @@ for i = 1:200
 testing_vector=test(i,:);
 
 % Extract the centroid that is closest to the test image
-[prediction_index, vec_distance]=assign_vector_to_centroid(testing_vector,centroids);
+[prediction_index, vec_distance]=assign_vector_to_centroid(testing_vector(:,1:784),centroids);
 
 predictions(i) = centroid_labels(prediction_index);
 
@@ -49,7 +51,18 @@ title('Predictions');
 % However, remember that some of these are outliers
 sum(correctlabels==predictions)
 
-function [index, vec_distance] = assign_vector_to_centroid(data,centroids)
-% FILL IN
+function [index, vec_distance] = assign_vector_to_centroid(data, centroids)
+    minimumDistance = inf;  % initialize to infinity
+    index = 1;  % initialize index
+    
+    for k = 1:size(centroids, 1)
+        distance = norm(data - centroids(k, :));  % calculate distance
+        if distance < minimumDistance
+            minimumDistance = distance;  % update minimum
+            index = k;  % update index
+        end
+    end
+    
+    vec_distance = minimumDistance;
 end
 
