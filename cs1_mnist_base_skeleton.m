@@ -153,7 +153,7 @@ for ind=1:k
     subplot(plotsize,plotsize,ind);
     
     imagesc(reshape(centr,[28 28])');
-    title(strcat('Centroid ',num2str(ind)))
+    title(strcat('Centroid ',num2str(ind)));
 
 end
 if use_stratified
