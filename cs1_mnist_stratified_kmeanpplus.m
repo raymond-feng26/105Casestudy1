@@ -49,7 +49,7 @@ test(:,785)=zeros(200,1);
 
 figure;
 colormap('gray'); % this tells MATLAB to depict the image in grayscale
-testimage = reshape(test(1,[1:784]), [28 28]);
+testimage = reshape(test(1,1:784), [28 28]);
 % we are reshaping the first row of 'test', columns 1-784 (since the 785th
 % column is going to be used for storing the centroid assignment.
 imagesc(testimage'); % this command plots an array as an image.  Type 'help imagesc' to learn more.
@@ -77,7 +77,7 @@ imagesc(testimage'); % this command plots an array as an image.  Type 'help imag
 use_stratified = true;
 
 if use_stratified
-    k_per_digit=[5;5;7;6;6;5;7;4;5;4];
+    k_per_digit=[6;5;7;6;7;6;7;4;5;6];
     all_centroid=[];
     all_labels=[];
     max_iter=20;
@@ -150,7 +150,7 @@ plotsize = ceil(sqrt(k));
 
 for ind=1:k
     
-    centr=all_centroid(ind,[1:784]);
+    centr=all_centroid(ind,1:784);
     subplot(plotsize,plotsize,ind);
     
     imagesc(reshape(centr,[28 28])');

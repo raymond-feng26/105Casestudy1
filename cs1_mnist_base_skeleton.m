@@ -74,7 +74,7 @@ imagesc(testimage'); % this command plots an array as an image.  Type 'help imag
 
 
 %% This for-loop enacts the k-means algorithm
-use_stratified = true;
+use_stratified = false;
 
 if use_stratified
     k_per_digit=[5;5;7;6;8;5;7;4;5;5];
