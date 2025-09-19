@@ -37,12 +37,43 @@ C = centroids(:,1:784);
 N = size(X_test,1); % number of test images 200
 K= size(C,1) % number of representatives (centroids) depending on training
 
-% idea: calculate the norm, if too far of a certain value, outlier
+
+% Squared Euclidean: D(i,j) = ||x||^2 + ||c||^2 - 2 x·c
+XX = sum(X_test.^2, 2);                 % N x 1
+CC = sum(C.^2, 2)';                     % 1 x K
+D2 = XX + CC - 2*(X_test * C');  % N x K
+D2 = max(D2, 0);          % makes everything positive, compares the value in Dist_XXCC to zero. 
+
+[minD2, idx_nearest] = min(D2, [], 2); %minD2 is the smallest squared distnace, idx is the index of cloest centroid
+distance_nearest = sqrt(minD2);
+
+% threshold: Median + MAD, fallback to 99th percentile if MAD approx 0
+medD = median(dist_nearest); %middle value of all distances
+MAD  = median(abs(dist_nearest - medD));    % unscaled MAD
+% MAD = Median Absolute Deviation 
+% = median of the absolute differences from the median. Measures spread
+% ignoring extreme outlier. 
+
+if MAD < 1e-9
+    s = sort(distance_nearest);
+    threshold_idx = max(1, ceil(0.99 * numel(s))); % ceil() rounds up,top 1%
+    THRESH = s(threshold_idx);
+else
+    TAU = 3; % how many MADS above or below median to be considered far
+    THRESH = medD + TAU * MAD;
+end
+
+outliers = double(dist_nearest > THRESH);
+outliers = reshape(outliers, [], 1); % 1 if the ith entry is an outlier
 
 
 %% MAKE A STEM PLOT OF THE OUTLIER FLAG
 figure;
-% FILL IN
+stem(1:numel(outliers), outliers); %1:numel(outlier) is the number of outliers in the xaxis, so 1-200
+xlabel('Test Set Index');
+ylabel('Flag');
+title('Outliers');
+axis normal;
 
 %% The following plots the correct and incorrect predictions
 % Make sure you understand how this plot is constructed
