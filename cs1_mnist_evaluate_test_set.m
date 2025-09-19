@@ -32,7 +32,13 @@ end
 %% DESIGN AND IMPLEMENT A STRATEGY TO SET THE outliers VECTOR
 % outliers(i) should be set to 1 if the i^th entry is an outlier
 % otherwise, outliers(i) should be 0
-% FILL IN
+X_test = test(:,1:784); % 200 rows of iamges * 784 columns of pixel values
+C = centroids(:,1:784);
+N = size(X_test,1); % number of test images 200
+K= size(C,1) % number of representatives (centroids) depending on training
+
+% idea: calculate the norm, if too far of a certain value, outlier
+
 
 %% MAKE A STEM PLOT OF THE OUTLIER FLAG
 figure;
