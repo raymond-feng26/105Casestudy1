@@ -108,28 +108,6 @@ if use_stratified
         plot(1:max_iter,digit_cost{digit+1});
         grid on;
     end
-
-else
-    k= 50; % set k
-    max_iter= 20; % set the number of iterations of the algorithm
-    all_centroid=kmeans_plusplus_init(train(:,1:784),k);
-    cost_iteration = zeros(max_iter, 1);
-    for iter=1:max_iter
-        total_cost=0;
-        for i=1:size(train,1)
-            [centroidIndex, distance] = assign_vector_to_centroid(train(i,1:784), all_centroid); % assign vector to centroid, return distance and index
-            train(i, 785) = centroidIndex; % Assign the index of the closest centroid to the last column
-            total_cost = total_cost + distance^2; % Accumulate the total cost= distance square
-        end
-        all_centroid = update_Centroids(train, k);
-        cost_iteration(iter) = total_cost; % Store the cost for the current iteration in cost array
-        
-    end
-    figure;
-    plot(1:max_iter,cost_iteration); % x axis from 1-max iteration, column vector with size max iteration in y
-    xlabel("iteration");
-    ylabel("cost");
-    title("k-means cost vs iteration");
 end
 
 %% This section of code plots the k-means cost as a function of the number
@@ -158,10 +136,17 @@ for ind=1:k
 
 end
 
-if use_stratified
-    save('classifierdata.mat', 'all_centroid', 'all_labels');
-    fprintf('\nSaved centroids and labels to classifierdata.mat\n');
-end
+
+save('classifierdata.mat', 'all_centroid', 'all_labels');
+fprintf('\nSaved centroids and labels to classifierdata.mat\n');
+
+
+
+%% Function to initialize the centroids
+% This function randomly chooses k vectors from our training set and uses them to be our initial centroids
+% There are other ways you might initialize centroids.
+% ***Feel free to experiment.***
+% Note that this function takes two inputs and emits one output (y).
 % perform kmeans++ initialization
 function centroids = kmeans_plusplus_init(data, k)
     n=size(data,1);
@@ -182,23 +167,6 @@ function centroids = kmeans_plusplus_init(data, k)
         centroids(c, :) = data(nextC, :);
     end
 end
-
-%% Function to initialize the centroids
-% This function randomly chooses k vectors from our training set and uses them to be our initial centroids
-% There are other ways you might initialize centroids.
-% ***Feel free to experiment.***
-% Note that this function takes two inputs and emits one output (y).
-
-function y=initialize_centroids(data,num_centroids)
-
-random_index=randperm(size(data,1));
-
-centroids=data(random_index(1:num_centroids),:);
-
-y=centroids;
-
-end
-
 %% Function to pick the Closest Centroid using norm/distance
 % This function takes two arguments, a vector and a set of centroids
 % It returns the index of the assigned centroid and the distance between
