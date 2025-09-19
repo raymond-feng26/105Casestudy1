@@ -38,7 +38,7 @@ N = size(X_test,1); % number of test images 200
 K= size(C,1) % number of representatives (centroids) depending on training
 
 
-% Squared Euclidean: D(i,j) = ||x||^2 + ||c||^2 - 2 x·c
+% Squared Euclidean
 XX = sum(X_test.^2, 2);                 % N x 1
 CC = sum(C.^2, 2)';                     % 1 x K
 D2 = XX + CC - 2*(X_test * C');  % N x K
