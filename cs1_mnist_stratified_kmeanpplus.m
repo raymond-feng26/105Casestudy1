@@ -49,7 +49,7 @@ test(:,785)=zeros(200,1);
 
 figure;
 colormap('gray'); % this tells MATLAB to depict the image in grayscale
-testimage = reshape(test(1,1:784), [28 28]);
+testimage = reshape(test(38,1:784), [28 28]);
 % we are reshaping the first row of 'test', columns 1-784 (since the 785th
 % column is going to be used for storing the centroid assignment.
 imagesc(testimage'); % this command plots an array as an image.  Type 'help imagesc' to learn more.
@@ -78,35 +78,43 @@ use_stratified = true;
 
 if use_stratified
     k_per_digit=[6;5;7;6;7;6;7;4;5;6];
-    all_centroid=[];
-    all_labels=[];
-    max_iter=20;
-    digit_cost=cell(10,1);
-    for digit=0:9
-        digitData=train(trainsetlabels==digit,1:785);
-        digitData(:,785) = 0;
-        cost_iteration = zeros(max_iter, 1);
-        digitCentroids=kmeans_plusplus_init(digitData(:,1:784),k_per_digit(digit+1));
-        for iter=1:max_iter
-            total_cost=0;
-            for i=1:size(digitData,1)
-                [centroidIndex, distance] = assign_vector_to_centroid(digitData(i,1:784), digitCentroids); % assign vector to centroid, return distance and index
-                digitData(i, 785) = centroidIndex;
-                total_cost = total_cost + distance^2; % Accumulate the total cost
+    model_runtime=5;
+    all_centroid=cell(model_runtime,1);
+    all_labels=cell(model_runtime,1);
+    for r=1:model_runtime % I'm running the model five times and will later find the best one
+        rng(r*10169); % generate new seeds for new model  10139
+        max_iter=20;
+        temp_centroids = [];
+        temp_labels = [];
+        digit_cost=cell(10,1);
+        for digit=0:9
+            digitData=train(trainsetlabels==digit,1:785);
+            digitData(:,785) = 0;
+            cost_iteration = zeros(max_iter, 1);
+            digitCentroids=kmeans_plusplus_init(digitData(:,1:784),k_per_digit(digit+1));
+            for iter=1:max_iter
+                total_cost=0;
+                for i=1:size(digitData,1)
+                    [centroidIndex, distance] = assign_vector_to_centroid(digitData(i,1:784), digitCentroids); % assign vector to centroid, return distance and index
+                    digitData(i, 785) = centroidIndex;
+                    total_cost = total_cost + distance^2; % Accumulate the total cost
+                end
+                digitCentroids = update_Centroids(digitData, k_per_digit(digit+1)); % Update centroids for the current digit
+                cost_iteration(iter) = total_cost; % Store the cost for the current iteration in cost array
             end
-            digitCentroids = update_Centroids(digitData, k_per_digit(digit+1)); % Update centroids for the current digit
-            cost_iteration(iter) = total_cost; % Store the cost for the current iteration in cost array
+            digit_cost{digit+1}=cost_iteration;
+            temp_centroids = [temp_centroids; digitCentroids(:, 1:784)];
+            temp_labels=[temp_labels;repmat(digit,k_per_digit(digit+1),1)];
         end
-        digit_cost{digit+1}=cost_iteration;
-        all_centroid = [all_centroid; digitCentroids(:, 1:784)];
-        all_labels=[all_labels;repmat(digit,k_per_digit(digit+1),1)];
-    end
-    k = size(all_centroid, 1);
-    figure;
-    for digit=0:9
-        subplot(2, 5, digit + 1);
-        plot(1:max_iter,digit_cost{digit+1});
-        grid on;
+        k = size(temp_centroids, 1);
+        all_centroid{r} = temp_centroids; % Store centroids for the current run
+        all_labels{r} = temp_labels; % Store labels for the current run
+        figure;
+        for digit=0:9
+            subplot(2, 5, digit + 1);
+            plot(1:max_iter,digit_cost{digit+1});
+            grid on;
+        end
     end
 end
 
@@ -128,7 +136,7 @@ plotsize = ceil(sqrt(k));
 
 for ind=1:k
     
-    centr=all_centroid(ind,1:784);
+    centr=temp_centroids(ind,1:784);
     subplot(plotsize,plotsize,ind);
     
     imagesc(reshape(centr,[28 28])');

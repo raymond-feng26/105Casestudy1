@@ -12,7 +12,7 @@
 % You should save 1) and 2) in a file named 'classifierdata.mat' as part of
 % your submission.
 
-predictions = zeros(200,1);
+test_predictions = zeros(200,1);
 outliers = zeros(200,1);
 centroids=all_centroid;
 centroid_labels=all_labels;
@@ -20,15 +20,26 @@ centroid_labels=all_labels;
 % loop through the test set, figure out the predicted number
 for i = 1:200
 
-testing_vector=test(i,:);
+    votes=zeros(5,1); % use weighted distance voting to find the most confident answer among the 5 models
+    distance=zeros(5,1);
+    for m=1:5 %for every model
+        testing_vector=test(i,:);
 
-% Extract the centroid that is closest to the test image
-[prediction_index, vec_distance]=assign_vector_to_centroid(testing_vector(:,1:784),centroids);
-
-predictions(i) = centroid_labels(prediction_index);
-
+        % Extract the centroid that is closest to the test image
+        [prediction_index, vec_distance]=assign_vector_to_centroid(testing_vector(:,1:784),centroids{m});
+        votes(m)= centroid_labels{m}(prediction_index); % get the vote from each model
+        distance(m) = vec_distance; % sstore the distance for weighting, closest the highest
+    end
+    weight=1./(distance+0.001); % calculate weight
+    weightedVotes= accumarray(votes+1, weight,[10,1]); %accumulate array to get weighted votes. 
+    %VOtes + 1 convert 0-9 to index 1-10, distance is accumulating data,
+    %10,1 is the size
+    [~,predictions]=max(weightedVotes);
+    test_predictions(i) = predictions-1;
+    
 end
 
+%{
 %% DESIGN AND IMPLEMENT A STRATEGY TO SET THE outliers VECTOR
 % outliers(i) should be set to 1 if the i^th entry is an outlier
 % otherwise, outliers(i) should be 0
@@ -48,8 +59,8 @@ D2 = max(D2, 0);          % makes everything positive, compares the value in Dis
 distance_nearest = sqrt(minD2);
 
 % threshold: Median + MAD, fallback to 99th percentile if MAD approx 0
-medD = median(dist_nearest); %middle value of all distances
-MAD  = median(abs(dist_nearest - medD));    % unscaled MAD
+medD = median(distance_nearest); %middle value of all distances
+MAD  = median(abs(distance_nearest - medD));    % unscaled MAD
 % MAD = Median Absolute Deviation 
 % = median of the absolute differences from the median. Measures spread
 % ignoring extreme outlier. 
@@ -63,7 +74,7 @@ else
     THRESH = medD + TAU * MAD;
 end
 
-outliers = double(dist_nearest > THRESH);
+outliers = double(distance_nearest > THRESH);
 outliers = reshape(outliers, [], 1); % 1 if the ith entry is an outlier
 
 
@@ -75,18 +86,20 @@ ylabel('Flag');
 title('Outliers');
 axis normal;
 
+%}
+
 %% The following plots the correct and incorrect predictions
 % Make sure you understand how this plot is constructed
 figure;
 plot(correctlabels,'o');
 hold on;
-plot(predictions,'x');
+plot(test_predictions,'x');
 title('Predictions');
 
 %% The following line provides the number of instances where and entry in correctlabel is
 % equatl to the corresponding entry in prediction
 % However, remember that some of these are outliers
-sum(correctlabels==predictions)
+sum(test_predictions==correctlabels)
 
 function [index, vec_distance] = assign_vector_to_centroid(data, centroids)
     minimumDistance = inf;  % initialize to infinity
