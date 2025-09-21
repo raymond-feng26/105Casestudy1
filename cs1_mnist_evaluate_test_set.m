@@ -138,7 +138,7 @@ else
     TAU = 3.5;  % how many MADS above or below median to be considered far (2.5-3.5)
     THRESH = medD2 + TAU * MAD2;
 end
-far_flag = d2_1 > THR2; % globally far --> outlier candidate, far_flag is a logical array, T&F
+far_flag = d2_1 > THRESH; % globally far --> outlier candidate, far_flag is a logical array, T&F
 
 
 % Rule 2: Ambiguity ("margin") 
