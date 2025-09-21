@@ -74,62 +74,28 @@ imagesc(testimage'); % this command plots an array as an image.  Type 'help imag
 
 
 %% This for-loop enacts the k-means algorithm
-use_stratified = false;
 
-if use_stratified
-    k_per_digit=[5;5;7;6;8;5;7;4;5;5];
-    all_centroid=[];
-    all_labels=[];
-    max_iter=15;
-    digit_cost=cell(10,1);
-    for digit=0:9
-        digitData=train(trainsetlabels==digit,1:784);
-        cost_iteration = zeros(max_iter, 1);
-        digitCentroids=initialize_centroids(digitData(:,1:784),k_per_digit(digit+1));
-        for iter=1:max_iter
-            total_cost=0;
-            for i=1:size(digitData,1)
-                [centroidIndex, distance] = assign_vector_to_centroid(digitData(i,1:784), digitCentroids); % assign vector to centroid, return distance and index
-                digitData(i, 785) = centroidIndex;
-                total_cost = total_cost + distance^2; % Accumulate the total cost
-            end
-            digitCentroids = update_Centroids(digitData, k_per_digit(digit+1)); % Update centroids for the current digit
-            cost_iteration(iter) = total_cost; % Store the cost for the current iteration in cost array
-        end
-        digit_cost{digit+1}=cost_iteration;
-        all_centroid = [all_centroid; digitCentroids(:, 1:784)];
-        all_labels=[all_labels;repmat(digit,k_per_digit(digit+1),1)];
+k= 30; % set k
+max_iter= 20; % set the number of iterations of the algorithm
+all_centroid=initialize_centroids(train(:,1:784),k);
+cost_iteration = zeros(max_iter, 1);
+for iter=1:max_iter
+    total_cost=0;
+    for i=1:size(train,1)
+        [centroidIndex, distance] = assign_vector_to_centroid(train(i,1:784), all_centroid); % assign vector to centroid, return distance and index
+        train(i, 785) = centroidIndex; % Assign the index of the closest centroid to the last column
+        total_cost = total_cost + distance^2; % Accumulate the total cost= distance square
     end
-    k = size(all_centroid, 1);
-    figure;
-    for digit=0:9
-        subplot(2, 5, digit + 1);
-        plot(1:max_iter,digit_cost{digit+1});
-        grid on;
-    end
-
-else
-    k= 30; % set k
-    max_iter= 20; % set the number of iterations of the algorithm
-    all_centroid=initialize_centroids(train(:,1:784),k);
-    cost_iteration = zeros(max_iter, 1);
-    for iter=1:max_iter
-        total_cost=0;
-        for i=1:size(train,1)
-            [centroidIndex, distance] = assign_vector_to_centroid(train(i,1:784), all_centroid); % assign vector to centroid, return distance and index
-            train(i, 785) = centroidIndex; % Assign the index of the closest centroid to the last column
-            total_cost = total_cost + distance^2; % Accumulate the total cost= distance square
-        end
-        all_centroid = update_Centroids(train, k);
-        cost_iteration(iter) = total_cost; % Store the cost for the current iteration in cost array
-        
-    end
-    figure;
-    plot(1:max_iter,cost_iteration); % x axis from 1-max iteration, column vector with size max iteration in y
-    xlabel("iteration");
-    ylabel("cost");
-    title("k-means cost vs iteration");
+    all_centroid = update_Centroids(train, k);
+    cost_iteration(iter) = total_cost; % Store the cost for the current iteration in cost array
+    
 end
+figure;
+plot(1:max_iter,cost_iteration); % x axis from 1-max iteration, column vector with size max iteration in y
+xlabel("iteration");
+ylabel("cost");
+title("k-means cost vs iteration");
+
 
 %% This section of code plots the k-means cost as a function of the number
 % of iterations
@@ -156,10 +122,7 @@ for ind=1:k
     title(strcat('Centroid ',num2str(ind)));
 
 end
-if use_stratified
-    save('classifierdata.mat', 'all_centroid', 'all_labels');
-    fprintf('\nSaved centroids and labels to classifierdata.mat\n');
-end
+
 
 %% Function to initialize the centroids
 % This function randomly chooses k vectors from our training set and uses them to be our initial centroids
