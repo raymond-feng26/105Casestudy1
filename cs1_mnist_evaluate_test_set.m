@@ -14,15 +14,16 @@
 
 test_predictions = zeros(200,1);
 outliers = zeros(200,1);
+all_distance=zeros(200,10);
 centroids=all_centroid;
 centroid_labels=all_labels;
 
 % loop through the test set, figure out the predicted number
 for i = 1:200
 
-    votes=zeros(5,1); % use weighted distance voting to find the most confident answer among the 5 models
-    distance=zeros(5,1);
-    for m=1:5 %for every model
+    votes=zeros(10,1); % use weighted distance voting to find the most confident answer among the 5 models
+    distance=zeros(10,1);
+    for m=1:10 %for every model
         testing_vector=test(i,:);
 
         % Extract the centroid that is closest to the test image
@@ -30,6 +31,8 @@ for i = 1:200
         votes(m)= centroid_labels{m}(prediction_index); % get the vote from each model
         distance(m) = vec_distance; % sstore the distance for weighting, closest the highest
     end
+    
+    all_distance(i,:)=distance;
     weight=1./(distance+0.001); % calculate weight
     weightedVotes= accumarray(votes+1, weight,[10,1]); %accumulate array to get weighted votes. 
     %VOtes + 1 convert 0-9 to index 1-10, distance is accumulating data,
@@ -39,28 +42,17 @@ for i = 1:200
     
 end
 
-%{
+
 %% DESIGN AND IMPLEMENT A STRATEGY TO SET THE outliers VECTOR
 % outliers(i) should be set to 1 if the i^th entry is an outlier
 % otherwise, outliers(i) should be 0
-X_test = test(:,1:784); % 200 rows of iamges * 784 columns of pixel values
-C = centroids(:,1:784);
-N = size(X_test,1); % number of test images 200
-K= size(C,1) % number of representatives (centroids) depending on training
 
 
-% Squared Euclidean
-XX = sum(X_test.^2, 2);                 % N x 1
-CC = sum(C.^2, 2)';                     % 1 x K
-D2 = XX + CC - 2*(X_test * C');  % N x K
-D2 = max(D2, 0);          % makes everything positive, compares the value in Dist_XXCC to zero. 
-
-[minD2, idx_nearest] = min(D2, [], 2); %minD2 is the smallest squared distnace, idx is the index of cloest centroid
-distance_nearest = sqrt(minD2);
+distance_nearest = min(all_distance, [], 2); %200*1 vector of smallest distance to centroid
 
 % threshold: Median + MAD, fallback to 99th percentile if MAD approx 0
-medD = median(distance_nearest); %middle value of all distances
-MAD  = median(abs(distance_nearest - medD));    % unscaled MAD
+medD = median(distance_nearest); %middle typical value of all distances
+MAD  = median(abs(distance_nearest - medD));    % typical deviation
 % MAD = Median Absolute Deviation 
 % = median of the absolute differences from the median. Measures spread
 % ignoring extreme outlier. 
@@ -70,12 +62,11 @@ if MAD < 1e-9
     threshold_idx = max(1, ceil(0.99 * numel(s))); % ceil() rounds up,top 1%
     THRESH = s(threshold_idx);
 else
-    TAU = 3; % how many MADS above or below median to be considered far
+    TAU = 2.48; % how many MADS above or below median to be considered far
     THRESH = medD + TAU * MAD;
 end
 
 outliers = double(distance_nearest > THRESH);
-outliers = reshape(outliers, [], 1); % 1 if the ith entry is an outlier
 
 
 %% MAKE A STEM PLOT OF THE OUTLIER FLAG
@@ -86,7 +77,7 @@ ylabel('Flag');
 title('Outliers');
 axis normal;
 
-%}
+
 
 %% The following plots the correct and incorrect predictions
 % Make sure you understand how this plot is constructed
