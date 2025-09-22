@@ -79,12 +79,15 @@ k= 30; % set k
 max_iter= 20; % set the number of iterations of the algorithm
 all_centroid=initialize_centroids(train(:,1:784),k);
 cost_iteration = zeros(max_iter, 1);
+centroid_label=cell(k,1);
+centroid_digit=zeros(k,1);
 for iter=1:max_iter
     total_cost=0;
     for i=1:size(train,1)
         [centroidIndex, distance] = assign_vector_to_centroid(train(i,1:784), all_centroid); % assign vector to centroid, return distance and index
         train(i, 785) = centroidIndex; % Assign the index of the closest centroid to the last column
         total_cost = total_cost + distance^2; % Accumulate the total cost= distance square
+        centroid_label{centroidIndex}=[centroid_label{centroidIndex},trainsetlabels(i)];
     end
     all_centroid = update_Centroids(train, k);
     cost_iteration(iter) = total_cost; % Store the cost for the current iteration in cost array
@@ -95,6 +98,10 @@ plot(1:max_iter,cost_iteration); % x axis from 1-max iteration, column vector wi
 xlabel("iteration");
 ylabel("cost");
 title("k-means cost vs iteration");
+
+for i=1:k
+    centroid_digit(i,1)=mode(centroid_label{i});
+end
 
 
 %% This section of code plots the k-means cost as a function of the number
