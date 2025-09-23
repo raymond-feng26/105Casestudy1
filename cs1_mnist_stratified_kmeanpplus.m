@@ -75,21 +75,21 @@ imagesc(testimage'); % this command plots an array as an image.  Type 'help imag
 
 %% This for-loop enacts the k-means algorith
 
-k_per_digit=[6;5;7;6;7;6;7;4;5;6];
-model_runtime=10;
-all_centroid=cell(model_runtime,1);
+k_per_digit=[4;3;5;4;5;4;5;3;3;4]; % determine the k value for each digit(centroids I want for each digit)
+model_runtime=10; % emselble voting: running 10 models and find the one with highest vote
+all_centroid=cell(model_runtime,1); % use cells to store
 all_labels=cell(model_runtime,1);
-for r=1:model_runtime % I'm running the model five times and will later find the best one
-    rng(r*10499); % generate new seeds for new model  10299
+for r=1:model_runtime % I'm running 10 models and will later find the best one
+    rng(r*10499); % generate new seeds for new model  10499
     max_iter=20;
-    temp_centroids = [];
+    temp_centroids = []; % temporary centroid for this model
     temp_labels = [];
     digit_cost=cell(10,1);
-    for digit=0:9
-        digitData=train(trainsetlabels==digit,1:785);
+    for digit=0:9 % I'm deviding the group to 10 numbers and run kmean on each number
+        digitData=train(trainsetlabels==digit,1:785); % devide groups
         digitData(:,785) = 0;
         cost_iteration = zeros(max_iter, 1);
-        digitCentroids=kmeans_plusplus_init(digitData(:,1:784),k_per_digit(digit+1));
+        digitCentroids=kmeans_plusplus_init(digitData(:,1:784),k_per_digit(digit+1)); %run kmean++ init
         for iter=1:max_iter
             total_cost=0;
             for i=1:size(digitData,1)
@@ -101,7 +101,7 @@ for r=1:model_runtime % I'm running the model five times and will later find the
             cost_iteration(iter) = total_cost; % Store the cost for the current iteration in cost array
         end
         digit_cost{digit+1}=cost_iteration;
-        temp_centroids = [temp_centroids; digitCentroids(:, 1:784)];
+        temp_centroids = [temp_centroids; digitCentroids(:, 1:784)]; % concatenate centroids and labels
         temp_labels=[temp_labels;repmat(digit,k_per_digit(digit+1),1)];
     end
     k = size(temp_centroids, 1);
@@ -112,7 +112,7 @@ for r=1:model_runtime % I'm running the model five times and will later find the
         subplot(2, 5, digit + 1);
         plot(1:max_iter,digit_cost{digit+1});
         title(strcat('Cost digit ',num2str(digit)));
-        grid on;
+        grid on; % This generates 10 figures, one for each model
     end
     figure;
     colormap('gray');
@@ -126,7 +126,7 @@ for r=1:model_runtime % I'm running the model five times and will later find the
 
         imagesc(reshape(centr,[28 28])');
         title(strcat('Centroid ',num2str(ind)));
-
+        % 10 figures as well
     end
 end
 
@@ -155,24 +155,26 @@ fprintf('\nSaved centroids and labels to classifierdata.mat\n');
 % There are other ways you might initialize centroids.
 % ***Feel free to experiment.***
 % Note that this function takes two inputs and emits one output (y).
-% perform kmeans++ initialization
+
+% perform kmeans++ initialization, it finds points far away from centroid
+% and assign it with a higher probability of being chosen as centroid
 function centroids = kmeans_plusplus_init(data, k)
     n=size(data,1);
     d=size(data,2);
     centroids=zeros(k,d);
-    centroids(1,:)=data(randi(n),:);
-    for c=2:k
-        distance2=inf(n,1);
-        for i=1:n
-            for j=1:c-1
-                distance2(i)=min(distance2(i),norm(data(i,:)-centroids(j,:))^2);
+    centroids(1,:)=data(randi(n),:); %Those two lines assign the first centroid randomly
+    for c=2:k % for every remaining centroids
+        distance2=inf(n,1); %init distance square
+        for i=1:n % for every data point
+            for j=1:c-1 % for every existing centroid
+                distance2(i)=min(distance2(i),norm(data(i,:)-centroids(j,:))^2); % find the smallest distance to centroid
             end
         end
-        probabilities=distance2/sum(distance2);
+        probabilities=distance2/sum(distance2); % Find the probability being chosen as next centroid, higher distance=higher chance
         cumprob=cumsum(probabilities);
         r=rand();
         nextC=find(cumprob>r,1,"first");
-        centroids(c, :) = data(nextC, :);
+        centroids(c, :) = data(nextC, :); % Those 4 lines are finding new centroids by finding random number and compare
     end
 end
 %% Function to pick the Closest Centroid using norm/distance

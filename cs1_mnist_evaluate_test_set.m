@@ -21,7 +21,7 @@ centroid_labels=all_labels;
 % loop through the test set, figure out the predicted number
 for i = 1:200
 
-    votes=zeros(10,1); % use weighted distance voting to find the most confident answer among the 5 models
+    votes=zeros(10,1); % use weighted distance voting to find the most confident answer among the 10 models
     distance=zeros(10,1);
     for m=1:10 %for every model
         testing_vector=test(i,:);
@@ -32,13 +32,13 @@ for i = 1:200
         distance(m) = vec_distance; % sstore the distance for weighting, closest the highest
     end
     
-    all_distance(i,:)=distance;
+    all_distance(i,:)=distance; % store distance for outlier detection
     weight=1./(distance+0.001); % calculate weight
     weightedVotes= accumarray(votes+1, weight,[10,1]); %accumulate array to get weighted votes. 
     %VOtes + 1 convert 0-9 to index 1-10, distance is accumulating data,
     %10,1 is the size
-    [~,predictions]=max(weightedVotes);
-    test_predictions(i) = predictions-1;
+    [~,predictions]=max(weightedVotes); % find prediction as maximum vote
+    test_predictions(i) = predictions-1; % convert from 1-10 to 0-9
     
 end
 
@@ -57,7 +57,7 @@ MAD  = median(abs(distance_nearest - medD));    % typical deviation
 % = median of the absolute differences from the median. Measures spread
 % ignoring extreme outlier. 
 
-if MAD < 1e-9
+if MAD < 1e-9 % if MAD is small, find the top 1% as outliers
     s = sort(distance_nearest);
     threshold_idx = max(1, ceil(0.99 * numel(s))); % ceil() rounds up,top 1%
     THRESH = s(threshold_idx);
@@ -66,8 +66,22 @@ else
     THRESH = medD + TAU * MAD;
 end
 
-outliers = double(distance_nearest > THRESH);
+outliers = double(distance_nearest > THRESH); % determine outliers=distance>threshold
+outlier_indices = find(outliers == 1); % find outlier index and print out
+num_outliers = length(outlier_indices); % number of outliers, for plotting
 
+
+plotsize = ceil(sqrt(num_outliers));
+figure;
+
+for ind = 1:num_outliers
+    outlier_sample = test(outlier_indices(ind), 1:784);
+    subplot(plotsize, plotsize, ind);
+    imagesc(reshape(outlier_sample, [28 28])');
+    title(sprintf('Outlier %d', ind));
+end
+
+%plot out outliers
 
 %% MAKE A STEM PLOT OF THE OUTLIER FLAG
 figure;

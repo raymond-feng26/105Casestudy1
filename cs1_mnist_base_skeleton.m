@@ -75,11 +75,11 @@ imagesc(testimage'); % this command plots an array as an image.  Type 'help imag
 
 %% This for-loop enacts the k-means algorithm
 
-k= 30; % set k
+k= 40; % set k
 max_iter= 20; % set the number of iterations of the algorithm
-all_centroid=initialize_centroids(train(:,1:784),k);
+all_centroid=initialize_centroids(train(:,1:784),k); % initialize centroids
 cost_iteration = zeros(max_iter, 1);
-centroid_label=cell(k,1);
+centroid_label=cell(k,1);% store all centroid info for labeling
 centroid_digit=zeros(k,1);
 for iter=1:max_iter
     total_cost=0;
