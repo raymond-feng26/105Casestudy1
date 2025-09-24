@@ -80,7 +80,7 @@ model_runtime=10; % emselble voting: running 10 models and find the one with hig
 all_centroid=cell(model_runtime,1); % use cells to store
 all_labels=cell(model_runtime,1);
 for r=1:model_runtime % I'm running 10 models and will later find the best one
-    rng(r*10499); % generate new seeds for new model  10499
+    rng(r*10126); % generate new seeds for new model to prevent 10 exactly same model 10499
     max_iter=20;
     temp_centroids = []; % temporary centroid for this model
     temp_labels = [];
