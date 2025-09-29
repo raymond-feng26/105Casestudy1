@@ -62,7 +62,7 @@ if MAD < 1e-9 % if MAD is small, find the top 1% as outliers
     threshold_idx = max(1, ceil(0.99 * numel(s))); % ceil() rounds up,top 1%
     THRESH = s(threshold_idx);
 else
-    TAU = 2.48; % how many MADS above or below median to be considered far
+    TAU = 3; % how many MADS above or below median to be considered far
     THRESH = medD + TAU * MAD;
 end
 
