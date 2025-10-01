@@ -14,9 +14,7 @@
 
 predictions = zeros(200,1);
 outliers = zeros(200,1);
-centroids=all_centroids;
-centroid_labels=all_labels;
-distance_nearest=zeros(200,1);
+distance_nearest=zeros(200,1); % store all diatances for outlier detection
 
 % loop through the test set, figure out the predicted number
 for i = 1:200

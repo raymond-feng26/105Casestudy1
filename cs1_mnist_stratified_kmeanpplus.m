@@ -80,7 +80,7 @@ model_runtime=10; % emselble voting: running 10 models and find the one with hig
 all_centroids=[]; % use cells to store
 all_labels=[];
 
-rng(10126); 
+rng(10126); % fixed random seed for stable output
 max_iter=20;
 digit_cost=cell(10,1);
 for digit=0:9 % I'm deviding the group to 10 numbers and run kmean on each number
@@ -137,10 +137,11 @@ end
 % Again, use help <functionname> to learn about the different functions
 % that are being used here.
 
+centroids=all_centroids;
+centroid_labels=all_labels;
 
 
-
-save('classifierdata.mat', 'all_centroids', 'all_labels');
+save('classifierdata.mat', 'centroids', 'centroid_labels');
 fprintf('\nSaved centroids and labels to classifierdata.mat\n');
 
 
