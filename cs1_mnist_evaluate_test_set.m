@@ -84,6 +84,9 @@ plot(correctlabels,'o');
 hold on;
 plot(predictions,'x');
 title('Predictions');
+xlabel('test set index');
+ylabel('digit label');
+legend({'correctlabels','predicted labels'});
 
 %% The following line provides the number of instances where and entry in correctlabel is
 % equatl to the corresponding entry in prediction
