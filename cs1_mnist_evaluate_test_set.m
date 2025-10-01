@@ -12,34 +12,22 @@
 % You should save 1) and 2) in a file named 'classifierdata.mat' as part of
 % your submission.
 
-test_predictions = zeros(200,1);
+predictions = zeros(200,1);
 outliers = zeros(200,1);
-all_distance=zeros(200,10);
-centroids=all_centroid;
+centroids=all_centroids;
 centroid_labels=all_labels;
+distance_nearest=zeros(200,1);
 
 % loop through the test set, figure out the predicted number
 for i = 1:200
 
-    votes=zeros(10,1); % use weighted distance voting to find the most confident answer among the 10 models
-    distance=zeros(10,1);
-    for m=1:10 %for every model
-        testing_vector=test(i,:);
+testing_vector=test(i,1:784);
 
-        % Extract the centroid that is closest to the test image
-        [prediction_index, vec_distance]=assign_vector_to_centroid(testing_vector(:,1:784),centroids{m});
-        votes(m)= centroid_labels{m}(prediction_index); % get the vote from each model
-        distance(m) = vec_distance; % sstore the distance for weighting, closest the highest
-    end
-    
-    all_distance(i,:)=distance; % store distance for outlier detection
-    weight=1./(distance+0.001); % calculate weight
-    weightedVotes= accumarray(votes+1, weight,[10,1]); %accumulate array to get weighted votes. 
-    %VOtes + 1 convert 0-9 to index 1-10, distance is accumulating data,
-    %10,1 is the size
-    [~,predictions]=max(weightedVotes); % find prediction as maximum vote
-    test_predictions(i) = predictions-1; % convert from 1-10 to 0-9
-    
+% Extract the centroid that is closest to the test image
+[prediction_index, vec_distance]=assign_vector_to_centroid(testing_vector,centroids);
+distance_nearest(i)=vec_distance;
+predictions(i) = centroid_labels(prediction_index);
+
 end
 
 
@@ -47,8 +35,6 @@ end
 % outliers(i) should be set to 1 if the i^th entry is an outlier
 % otherwise, outliers(i) should be 0
 
-
-distance_nearest = min(all_distance, [], 2); %200*1 vector of smallest distance to centroid
 
 % threshold: Median + MAD, fallback to 99th percentile if MAD approx 0
 medD = median(distance_nearest); %middle typical value of all distances
@@ -62,7 +48,7 @@ if MAD < 1e-9 % if MAD is small, find the top 1% as outliers
     threshold_idx = max(1, ceil(0.99 * numel(s))); % ceil() rounds up,top 1%
     THRESH = s(threshold_idx);
 else
-    TAU = 3; % how many MADS above or below median to be considered far
+    TAU = 2.5; % how many MADS above or below median to be considered far
     THRESH = medD + TAU * MAD;
 end
 
@@ -98,13 +84,13 @@ axis normal;
 figure;
 plot(correctlabels,'o');
 hold on;
-plot(test_predictions,'x');
+plot(predictions,'x');
 title('Predictions');
 
 %% The following line provides the number of instances where and entry in correctlabel is
 % equatl to the corresponding entry in prediction
 % However, remember that some of these are outliers
-sum(test_predictions==correctlabels)
+sum(predictions==correctlabels)
 
 function [index, vec_distance] = assign_vector_to_centroid(data, centroids)
     minimumDistance = inf;  % initialize to infinity

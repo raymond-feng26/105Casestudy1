@@ -77,58 +77,53 @@ imagesc(testimage'); % this command plots an array as an image.  Type 'help imag
 
 k_per_digit=[4;3;5;4;5;4;5;3;3;4]; % determine the k value for each digit(centroids I want for each digit)
 model_runtime=10; % emselble voting: running 10 models and find the one with highest vote
-all_centroid=cell(model_runtime,1); % use cells to store
-all_labels=cell(model_runtime,1);
-for r=1:model_runtime % I'm running 10 models and will later find the best one
-    rng(r*10926); % generate new seeds for new model to prevent 10 exactly same model
-    max_iter=20;
-    temp_centroids = []; % temporary centroid for this model
-    temp_labels = [];
-    digit_cost=cell(10,1);
-    for digit=0:9 % I'm deviding the group to 10 numbers and run kmean on each number
-        digitData=train(trainsetlabels==digit,1:785); % devide groups
-        digitData(:,785) = 0;
-        cost_iteration = zeros(max_iter, 1);
-        digitCentroids=kmeans_plusplus_init(digitData(:,1:784),k_per_digit(digit+1)); %run kmean++ init
-        for iter=1:max_iter
-            total_cost=0;
-            for i=1:size(digitData,1)
-                [centroidIndex, distance] = assign_vector_to_centroid(digitData(i,1:784), digitCentroids); % assign vector to centroid, return distance and index
-                digitData(i, 785) = centroidIndex;
-                total_cost = total_cost + distance^2; % Accumulate the total cost
-            end
-            digitCentroids = update_Centroids(digitData, k_per_digit(digit+1)); % Update centroids for the current digit
-            cost_iteration(iter) = total_cost; % Store the cost for the current iteration in cost array
+all_centroids=[]; % use cells to store
+all_labels=[];
+
+rng(10126); 
+max_iter=20;
+digit_cost=cell(10,1);
+for digit=0:9 % I'm deviding the group to 10 numbers and run kmean on each number
+    digitData=train(trainsetlabels==digit,1:785); % devide groups
+    digitData(:,785) = 0;
+    cost_iteration = zeros(max_iter, 1);
+    digitCentroids=kmeans_plusplus_init(digitData(:,1:784),k_per_digit(digit+1)); %run kmean++ init
+    for iter=1:max_iter
+        total_cost=0;
+        for i=1:size(digitData,1)
+            [centroidIndex, distance] = assign_vector_to_centroid(digitData(i,1:784), digitCentroids); % assign vector to centroid, return distance and index
+            digitData(i, 785) = centroidIndex;
+            total_cost = total_cost + distance^2; % Accumulate the total cost
         end
-        digit_cost{digit+1}=cost_iteration;
-        temp_centroids = [temp_centroids; digitCentroids(:, 1:784)]; % concatenate centroids and labels
-        temp_labels=[temp_labels;repmat(digit,k_per_digit(digit+1),1)];
+        digitCentroids = update_Centroids(digitData, k_per_digit(digit+1)); % Update centroids for the current digit
+        cost_iteration(iter) = total_cost; % Store the cost for the current iteration in cost array
     end
-    k = size(temp_centroids, 1);
-    all_centroid{r} = temp_centroids; % Store centroids for the current run
-    all_labels{r} = temp_labels; % Store labels for the current run
-    figure;
-    for digit=0:9
-        subplot(2, 5, digit + 1);
-        plot(1:max_iter,digit_cost{digit+1});
-        title(strcat('Cost digit ',num2str(digit)));
-        grid on; % This generates 10 figures, one for each model
-    end
-    figure;
-    colormap('gray');
-
-    plotsize = ceil(sqrt(k));
-
-    for ind=1:k
-
-        centr=temp_centroids(ind,1:784);
-        subplot(plotsize,plotsize,ind);
-
-        imagesc(reshape(centr,[28 28])');
-        title(strcat('Centroid ',num2str(ind)));
-        % 10 figures as well
-    end
+    digit_cost{digit+1}=cost_iteration;
+    all_centroids = [all_centroids; digitCentroids(:, 1:784)]; % concatenate centroids and labels
+    all_labels=[all_labels;repmat(digit,k_per_digit(digit+1),1)];
 end
+k = size(all_centroids, 1);
+figure;
+for digit=0:9
+    subplot(2, 5, digit + 1);
+    plot(1:max_iter,digit_cost{digit+1});
+    title(strcat('Cost digit ',num2str(digit)));
+    grid on; % This generates figures
+end
+figure;
+colormap('gray');
+
+plotsize = ceil(sqrt(k));
+
+for ind=1:k
+
+    centr=all_centroids(ind,1:784);
+    subplot(plotsize,plotsize,ind);
+
+    imagesc(reshape(centr,[28 28])');
+    title(strcat('Centroid ',num2str(ind)));
+end
+
 
 
 %% This section of code plots the k-means cost as a function of the number
@@ -145,7 +140,7 @@ end
 
 
 
-save('classifierdata.mat', 'all_centroid', 'all_labels');
+save('classifierdata.mat', 'all_centroids', 'all_labels');
 fprintf('\nSaved centroids and labels to classifierdata.mat\n');
 
 
